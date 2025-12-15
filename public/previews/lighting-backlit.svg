@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120">
+  <defs>
+    <linearGradient id="backlitBg" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FEF3C7"/>
+      <stop offset="50%" stop-color="#FDE68A"/>
+      <stop offset="100%" stop-color="#F59E0B"/>
+    </linearGradient>
+    <radialGradient id="backlitGlow" cx="50%" cy="100%" r="60%">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="50%" stop-color="#FEF3C7"/>
+      <stop offset="100%" stop-color="#F59E0B"/>
+    </radialGradient>
+  </defs>
+  <rect width="120" height="120" fill="url(#backlitBg)"/>
+  <!-- Strong backlight source -->
+  <ellipse cx="60" cy="120" rx="80" ry="40" fill="url(#backlitGlow)" opacity="0.8"/>
+  <ellipse cx="60" cy="115" rx="50" ry="25" fill="#FFFFFF" opacity="0.4"/>
+  <!-- Silhouette subject (dark, no detail) -->
+  <rect x="42" y="35" width="36" height="70" rx="5" fill="#1F2937"/>
+  <!-- Head silhouette -->
+  <circle cx="60" cy="25" r="15" fill="#1F2937"/>
+  <!-- Rim lighting around edges -->
+  <rect x="42" y="35" width="2" height="70" fill="#FEF3C7" opacity="0.6"/>
+  <rect x="76" y="35" width="2" height="70" fill="#FEF3C7" opacity="0.6"/>
+  <path d="M45,25 Q45,10 60,10 Q75,10 75,25" stroke="#FEF3C7" stroke-width="2" fill="none" opacity="0.6"/>
+  <!-- Light flare -->
+  <circle cx="60" cy="100" r="8" fill="#FFFFFF" opacity="0.3"/>
+</svg>

@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120">
+  <defs>
+    <linearGradient id="dramaticBg" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#0F172A"/>
+      <stop offset="50%" stop-color="#1E293B"/>
+      <stop offset="100%" stop-color="#334155"/>
+    </linearGradient>
+    <linearGradient id="sideLight" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#F8FAFC"/>
+      <stop offset="100%" stop-color="transparent"/>
+    </linearGradient>
+  </defs>
+  <rect width="120" height="120" fill="url(#dramaticBg)"/>
+  <!-- Side light source -->
+  <rect x="0" y="0" width="15" height="120" fill="#F8FAFC" opacity="0.3"/>
+  <rect x="0" y="20" width="8" height="80" fill="#FFFFFF" opacity="0.5"/>
+  <!-- Subject with dramatic side lighting -->
+  <rect x="45" y="30" width="30" height="60" rx="4" fill="#1E293B"/>
+  <!-- Lit side of subject -->
+  <rect x="45" y="30" width="8" height="60" rx="2" fill="#F8FAFC"/>
+  <rect x="45" y="30" width="4" height="60" fill="#FFFFFF" opacity="0.6"/>
+  <!-- Hard shadow -->
+  <polygon points="75,30 95,50 95,110 75,90" fill="#000000" opacity="0.6"/>
+  <!-- Light beam -->
+  <polygon points="0,25 50,35 50,85 0,95" fill="#F8FAFC" opacity="0.05"/>
+</svg>

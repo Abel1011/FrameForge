@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120">
+  <defs>
+    <linearGradient id="studioBg" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#F1F5F9"/>
+      <stop offset="100%" stop-color="#E2E8F0"/>
+    </linearGradient>
+    <radialGradient id="softbox1" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#FFFFFF"/>
+      <stop offset="100%" stop-color="#F8FAFC"/>
+    </radialGradient>
+  </defs>
+  <rect width="120" height="120" fill="url(#studioBg)"/>
+  <!-- Studio lights (softboxes) -->
+  <rect x="5" y="5" width="25" height="20" rx="3" fill="url(#softbox1)" stroke="#CBD5E1" stroke-width="1"/>
+  <rect x="90" y="5" width="25" height="20" rx="3" fill="url(#softbox1)" stroke="#CBD5E1" stroke-width="1"/>
+  <!-- Light stands -->
+  <line x1="17" y1="25" x2="17" y2="45" stroke="#94A3B8" stroke-width="2"/>
+  <line x1="102" y1="25" x2="102" y2="45" stroke="#94A3B8" stroke-width="2"/>
+  <!-- Even light on subject -->
+  <rect x="40" y="45" width="40" height="55" rx="5" fill="#FFFFFF"/>
+  <rect x="40" y="45" width="40" height="55" rx="5" fill="#F8FAFC" stroke="#E2E8F0" stroke-width="1"/>
+  <!-- Soft controlled shadow -->
+  <ellipse cx="60" cy="108" rx="25" ry="5" fill="#94A3B8" opacity="0.15"/>
+  <!-- Subtle rim light -->
+  <rect x="40" y="45" width="2" height="55" fill="#FFFFFF" opacity="0.5"/>
+  <rect x="78" y="45" width="2" height="55" fill="#FFFFFF" opacity="0.5"/>
+</svg>

@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120">
+  <defs>
+    <linearGradient id="goldenSky" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FDB347"/>
+      <stop offset="50%" stop-color="#FF8C42"/>
+      <stop offset="100%" stop-color="#D4637D"/>
+    </linearGradient>
+    <radialGradient id="goldenSun" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#FFF9E6"/>
+      <stop offset="50%" stop-color="#FFD93D"/>
+      <stop offset="100%" stop-color="#FF8C42"/>
+    </radialGradient>
+  </defs>
+  <rect width="120" height="120" fill="url(#goldenSky)"/>
+  <!-- Setting sun -->
+  <circle cx="60" cy="95" r="25" fill="url(#goldenSun)"/>
+  <circle cx="60" cy="95" r="15" fill="#FFF9E6" opacity="0.6"/>
+  <!-- Long shadows -->
+  <polygon points="50,60 35,100 70,100 70,60" fill="#1F2937" opacity="0.25"/>
+  <!-- Subject catching golden light -->
+  <rect x="50" y="45" width="20" height="35" rx="3" fill="#FEF3C7"/>
+  <rect x="50" y="45" width="20" height="35" rx="3" fill="#FF8C42" opacity="0.4"/>
+  <!-- Warm light glow -->
+  <rect width="120" height="120" fill="#FF8C42" opacity="0.1"/>
+</svg>
