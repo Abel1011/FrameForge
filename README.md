@@ -291,16 +291,6 @@ Panel Generation:                                         ▼
 
 ---
 
-## 🛣️ Roadmap
-
-- [ ] **ComfyUI Integration** - Use FrameForge as a workflow node
-- [ ] **Real-time collaboration** - Multiple artists on one project
-- [ ] **Animation export** - Panel-to-panel transitions
-- [ ] **Custom ControlNets** - Pose consistency between panels
-- [ ] **HDR/16-bit support** - Professional color workflows
-
----
-
 ## 🙏 Acknowledgments
 
 - **[Bria AI](https://bria.ai/)** - For FIBO and the incredible structured prompt system
