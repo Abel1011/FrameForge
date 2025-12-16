@@ -16,6 +16,9 @@ const outfit = Outfit({
 export const metadata = {
   title: "FrameForge | Visual Narrative Creator",
   description: "Create stunning comics, manga, storyboards, and graphic novels with an intuitive visual editor",
+  icons: {
+    icon: '/icon.svg',
+  },
 };
 
 export default function RootLayout({ children }) {

@@ -3,8 +3,9 @@
 import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Layers, X } from 'lucide-react';
-import { loadProject, saveProject, generateId } from '../../lib/storage';
+import { loadProject, saveProject, generateId, createGridWithPanels } from '../../lib/storage';
 import { useAutoSave } from '../../hooks/useAutoSave';
+import { useJobPolling } from '../../hooks/useJobPolling';
 import GridEditor from '../../components/GridEditor';
 import PageSidebar from '../../components/PageSidebar';
 import EditorToolbar from '../../components/EditorToolbar';
@@ -14,6 +15,7 @@ import ProjectSetupWizard from '../../components/ProjectSetupWizard';
 import ProjectSettingsDialog from '../../components/ProjectSettingsDialog';
 import PanelContextToolbar from '../../components/PanelContextToolbar';
 import { GenerateComicDialog, GeneratePageDialog } from '../../components/AIGenerateDialog';
+import GenerationProgressOverlay from '../../components/GenerationProgressOverlay';
 import { exportPageAsImage, exportProjectAsPDF } from '../../lib/export';
 import { getPanelById, getAllLeafPanelIds, findPanelById, updatePanelContent } from '../../lib/grid';
 import { updateLayer, removeLayer as deleteLayer } from '../../lib/layers';
@@ -36,9 +38,27 @@ export default function ProjectEditorPage() {
   const [showGenerateComicDialog, setShowGenerateComicDialog] = useState(false);
   const [showGeneratePageDialog, setShowGeneratePageDialog] = useState(false);
   const [isGeneratingAI, setIsGeneratingAI] = useState(false);
+  const [generationProgress, setGenerationProgress] = useState(null);
+  const [generationType, setGenerationType] = useState(null); // 'comic' or 'page'
+  const [pendingStoryDescription, setPendingStoryDescription] = useState('');
+  const [pendingPageDescription, setPendingPageDescription] = useState('');
+  const [pendingKeepLayouts, setPendingKeepLayouts] = useState(false);
   const canvasRef = useRef(null);
 
   const { saveStatus } = useAutoSave(project);
+  
+  // Job polling hook for background generation (works for both comic and page)
+  const {
+    job: activeJob,
+    isPolling,
+    isComplete: isJobComplete,
+    isError: isJobError,
+    progress: jobProgress,
+    result: jobResult,
+    generatedItems: jobGeneratedItems,
+    startPolling,
+    reset: resetJob,
+  } = useJobPolling({ pollInterval: 2000 });
 
   // Load project on mount
   useEffect(() => {
@@ -58,6 +78,256 @@ export default function ProjectEditorPage() {
     };
     loadProjectData();
   }, [params.id, router]);
+
+  // React to job polling updates - update progress overlay
+  useEffect(() => {
+    if (!activeJob) return;
+    
+    // Update progress overlay based on job status
+    if (jobProgress) {
+      setGenerationProgress({
+        stage: jobProgress.stage,
+        message: jobProgress.message,
+        currentPage: jobProgress.currentPage,
+        totalPages: jobProgress.totalPages,
+        currentPanel: jobProgress.currentPanel,
+        totalPanels: jobProgress.totalPanels,
+        percent: jobProgress.percent,
+      });
+    }
+  }, [activeJob, jobProgress]);
+
+  // React to job completion - process results (handles both comic and page jobs)
+  useEffect(() => {
+    if (!isJobComplete || !jobResult || !project) return;
+    
+    const processJobResult = async () => {
+      const now = new Date().toISOString();
+      
+      // Handle PAGE generation job
+      if (generationType === 'page') {
+        const panels = jobResult.panels || [];
+        let imagesAdded = 0;
+        
+        // Get current page from project and currentPageId
+        const pageToUpdate = project?.pages.find(p => p.id === currentPageId);
+        
+        if (panels.length > 0 && pageToUpdate) {
+          let updatedGrid = JSON.parse(JSON.stringify(pageToUpdate.grid));
+          
+          // Get flat list of all panels in current page
+          const allPanels = [];
+          updatedGrid.rows.forEach(row => {
+            row.panels.forEach(panel => {
+              allPanels.push(panel);
+            });
+          });
+          
+          // Add images to panels
+          panels.forEach((generatedPanel, index) => {
+            if (generatedPanel.imageUrl && index < allPanels.length) {
+              const targetPanel = allPanels[index];
+              
+              const newLayer = {
+                id: generateId(),
+                type: 'image',
+                position: { x: 0, y: 0 },
+                size: { width: '100%', height: '100%', fillPanel: true },
+                data: {
+                  src: generatedPanel.imageUrl,
+                  fit: 'cover',
+                  aiGeneration: {
+                    prompt: generatedPanel.panelPlan?.sceneDescription || pendingPageDescription,
+                    seed: generatedPanel.seed,
+                    structuredPrompt: generatedPanel.structuredPrompt,
+                    generatedAt: now
+                  }
+                }
+              };
+              
+              const currentContent = targetPanel.content || { layers: [], backgroundColor: '#ffffff' };
+              targetPanel.content = {
+                ...currentContent,
+                layers: [...currentContent.layers, newLayer]
+              };
+              
+              imagesAdded++;
+            }
+          });
+          
+          // Update the page
+          const updatedPage = {
+            ...pageToUpdate,
+            grid: updatedGrid,
+            updatedAt: now
+          };
+          
+          // Update pages array
+          const updatedPages = project.pages.map(p => 
+            p.id === pageToUpdate.id ? updatedPage : p
+          );
+          
+          const updatedProject = { ...project, pages: updatedPages, updatedAt: now };
+          setProject(updatedProject);
+          await saveProject(updatedProject);
+          
+          setGenerationProgress({
+            stage: 'complete',
+            message: `Successfully generated ${imagesAdded} images for this page!`,
+            currentPage: 1,
+            totalPages: 1,
+            stats: {
+              pages: 1,
+              images: imagesAdded
+            }
+          });
+          
+          console.log(`✅ Page generated: ${imagesAdded} images`);
+        }
+        
+        setShowGeneratePageDialog(false);
+        setIsGeneratingAI(false);
+        resetJob(); // Clear job to prevent re-processing
+        return;
+      }
+      
+      // Handle COMIC generation job (existing logic)
+      const newPages = [];
+      let totalImagesAdded = 0;
+      
+      // Process each generated page from job result
+      const pages = jobResult.pages || [];
+      pages.forEach((generatedPage, pageIndex) => {
+        const panelCount = generatedPage.panels?.length || 0;
+        
+        // Create grid for this page
+        const pageGrid = pendingKeepLayouts && project.pages[pageIndex]
+          ? JSON.parse(JSON.stringify(project.pages[pageIndex].grid))
+          : createGridWithPanels(panelCount, project.height > project.width);
+        
+        // Get flat list of all panels
+        const allPanels = [];
+        pageGrid.rows.forEach(row => {
+          row.panels.forEach(panel => {
+            allPanels.push(panel);
+          });
+        });
+        
+        // Add images to panels
+        generatedPage.panels?.forEach((generatedPanel, panelIndex) => {
+          if (generatedPanel.imageUrl && panelIndex < allPanels.length) {
+            const targetPanel = allPanels[panelIndex];
+            
+            const newLayer = {
+              id: generateId(),
+              type: 'image',
+              position: { x: 0, y: 0 },
+              size: { width: '100%', height: '100%', fillPanel: true },
+              data: {
+                src: generatedPanel.imageUrl,
+                fit: 'cover',
+                aiGeneration: {
+                  prompt: generatedPanel.panelPlan?.sceneDescription || pendingStoryDescription,
+                  seed: generatedPanel.seed,
+                  structuredPrompt: generatedPanel.structuredPrompt,
+                  generatedAt: now
+                }
+              }
+            };
+            
+            const existingLayers = pendingKeepLayouts ? [] : (targetPanel.content?.layers || []);
+            targetPanel.content = {
+              backgroundColor: targetPanel.content?.backgroundColor || '#ffffff',
+              layers: [...existingLayers, newLayer]
+            };
+            
+            totalImagesAdded++;
+          }
+        });
+        
+        const newPage = {
+          id: pendingKeepLayouts && project.pages[pageIndex] ? project.pages[pageIndex].id : generateId(),
+          projectId: project.id,
+          order: pageIndex,
+          orientation: project.height > project.width ? 'portrait' : 'landscape',
+          grid: pageGrid,
+          createdAt: pendingKeepLayouts && project.pages[pageIndex] ? project.pages[pageIndex].createdAt : now,
+          updatedAt: now,
+          aiMetadata: {
+            pageDescription: generatedPage.pagePlan?.pageDescription,
+            mood: generatedPage.pagePlan?.mood,
+            panelsPlan: generatedPage.panelsPlan,
+            generatedAt: now
+          }
+        };
+        
+        newPages.push(newPage);
+      });
+      
+      // Update project
+      const updatedProject = {
+        ...project,
+        pages: newPages,
+        updatedAt: now,
+        aiMetadata: {
+          ...project.aiMetadata,
+          lastGeneration: {
+            type: 'full-comic',
+            title: jobResult.title,
+            summary: jobResult.summary,
+            storyDescription: pendingStoryDescription,
+            pageCount: newPages.length,
+            totalImages: totalImagesAdded,
+            generatedAt: now
+          }
+        }
+      };
+      
+      setProject(updatedProject);
+      await saveProject(updatedProject);
+      
+      if (newPages.length > 0) {
+        setCurrentPageId(newPages[0].id);
+      }
+      
+      // Update progress to complete
+      setGenerationProgress({
+        stage: 'complete',
+        message: `Successfully generated ${newPages.length} pages with ${totalImagesAdded} images!`,
+        currentPage: newPages.length,
+        totalPages: newPages.length,
+        stats: {
+          pages: newPages.length,
+          images: totalImagesAdded
+        }
+      });
+      
+      setIsGeneratingAI(false);
+      console.log(`✅ Comic generated: ${newPages.length} pages, ${totalImagesAdded} images`);
+      resetJob(); // Clear job to prevent re-processing
+    };
+    
+    processJobResult();
+  }, [isJobComplete, jobResult, project, pendingStoryDescription, pendingKeepLayouts, generationType, currentPageId, pendingPageDescription, resetJob]);
+
+  // React to job error
+  useEffect(() => {
+    if (!isJobError || !activeJob) return;
+    
+    setGenerationProgress({
+      stage: 'error',
+      message: activeJob.error || 'Generation failed',
+      currentPage: 0,
+      totalPages: jobProgress?.totalPages || 0
+    });
+    
+    // Close dialog if page generation
+    if (generationType === 'page') {
+      setShowGeneratePageDialog(false);
+    }
+    
+    setIsGeneratingAI(false);
+  }, [isJobError, activeJob, jobProgress, generationType]);
 
   // Handle AI-generated settings from StoryIdeaScreen
   const handleAIGeneratedSettings = useCallback((settings) => {
@@ -464,31 +734,42 @@ export default function ProjectEditorPage() {
     }).filter(Boolean);
   }, [currentPage, project]);
 
-  // Handle Generate Full Comic
+  // Handle Generate Full Comic (Background Job with Polling)
   const handleGenerateComic = useCallback(async ({ pageCount, storyDescription, keepLayouts }) => {
     if (!project) return;
     
+    // Store params for when job completes
+    setPendingStoryDescription(storyDescription);
+    setPendingKeepLayouts(keepLayouts);
+    
     setIsGeneratingAI(true);
+    setShowGenerateComicDialog(false);
+    
+    // Show progress overlay
+    setGenerationProgress({
+      stage: 'planning',
+      message: 'Starting comic generation...',
+      currentPage: 0,
+      totalPages: pageCount,
+      currentPanel: 0,
+      totalPanels: 0,
+      percent: 0
+    });
+    
     try {
+      // Start the background job
       const response = await fetch('/api/generate-comic', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          // Story info
           storyDescription,
           pageCount,
           keepLayouts,
-          
-          // Project info
           projectId: project.id,
           projectType: project.type,
           width: project.width,
           height: project.height,
-          
-          // Full project settings (characters, style, etc.)
           projectSettings: project.settings,
-          
-          // Existing pages (for keepLayouts option)
           existingPages: keepLayouts ? project.pages.map(p => ({
             id: p.id,
             order: p.order,
@@ -502,28 +783,47 @@ export default function ProjectEditorPage() {
       console.log('Generate Comic Response:', data);
       
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to generate comic');
+        throw new Error(data.error || 'Failed to start comic generation');
       }
       
-      // Close dialog after generation
-      setShowGenerateComicDialog(false);
-      
-      // TODO: Process the response and update pages
-      alert(`✅ Request sent to server!\n\nCheck your terminal console for the full request body.`);
+      // Start polling for job updates
+      if (data.jobId) {
+        console.log(`📋 Started polling for job: ${data.jobId}`);
+        startPolling(data.jobId);
+      } else {
+        throw new Error('No job ID returned from server');
+      }
       
     } catch (error) {
-      console.error('Failed to generate comic:', error);
-      alert(`❌ Error: ${error.message}`);
-    } finally {
+      console.error('Failed to start comic generation:', error);
+      setGenerationProgress({
+        stage: 'error',
+        message: error.message || 'Failed to start comic generation',
+        currentPage: 0,
+        totalPages: pageCount
+      });
       setIsGeneratingAI(false);
     }
-  }, [project]);
+  }, [project, startPolling]);
 
-  // Handle Generate Current Page
+  // Handle Generate Current Page (uses background job + polling)
   const handleGeneratePage = useCallback(async ({ pageDescription, keepLayout }) => {
     if (!project || !currentPage) return;
     
     setIsGeneratingAI(true);
+    setGenerationType('page');
+    setPendingPageDescription(pageDescription);
+    
+    setGenerationProgress({
+      stage: 'preparing',
+      message: 'Starting page generation...',
+      currentPage: 1,
+      totalPages: 1,
+      currentPanel: 0,
+      totalPanels: getCurrentPagePanels().length,
+      percent: 0
+    });
+    
     try {
       const panels = getCurrentPagePanels();
       
@@ -565,83 +865,26 @@ export default function ProjectEditorPage() {
         throw new Error(data.error || 'Failed to generate page');
       }
       
-      // Close dialog after generation
-      setShowGeneratePageDialog(false);
-      
-      // Process generated panels and update the grid with images
-      if (data.success && data.panels?.length > 0) {
-        let updatedGrid = { ...currentPage.grid };
-        let imagesAdded = 0;
-        
-        // Get flat list of all panels in the current page
-        const allPanels = [];
-        updatedGrid.rows.forEach(row => {
-          row.panels.forEach(panel => {
-            allPanels.push(panel);
-          });
-        });
-        
-        // Match generated images to panels by order
-        data.panels.forEach((generatedPanel, index) => {
-          if (generatedPanel.imageUrl && index < allPanels.length) {
-            const targetPanel = allPanels[index];
-            
-            // Add image layer to the panel
-            const newLayer = {
-              id: generateId(),
-              type: 'image',
-              position: { x: 0, y: 0 },
-              size: { width: '100%', height: '100%', fillPanel: true },
-              data: {
-                src: generatedPanel.imageUrl,
-                fit: 'cover',
-                aiGeneration: {
-                  prompt: generatedPanel.panelPlan?.sceneDescription || pageDescription,
-                  seed: generatedPanel.seed,
-                  structuredPrompt: generatedPanel.structuredPrompt,
-                  generatedAt: new Date().toISOString()
-                }
-              }
-            };
-            
-            // Update the panel content
-            const currentContent = targetPanel.content || { layers: [], backgroundColor: '#ffffff' };
-            targetPanel.content = {
-              ...currentContent,
-              layers: [...currentContent.layers, newLayer]
-            };
-            
-            imagesAdded++;
-          }
-        });
-        
-        // Update the page with the new grid
-        const updatedPage = {
-          ...currentPage,
-          grid: updatedGrid,
-          updatedAt: new Date().toISOString()
-        };
-        
-        // Update pages array
-        const updatedPages = project.pages.map(p => 
-          p.id === currentPage.id ? updatedPage : p
-        );
-        
-        // Update project
-        const updatedProject = { ...project, pages: updatedPages };
-        setProject(updatedProject);
-        saveProject(updatedProject);
-        
-        console.log(`✅ Added ${imagesAdded} AI-generated images to panels`);
+      // API now returns jobId - start polling
+      if (data.jobId) {
+        console.log(`📋 Page generation job started: ${data.jobId}`);
+        startPolling(data.jobId);
+        // Job completion will be handled by the useEffect
+      } else {
+        throw new Error('No job ID returned from API');
       }
       
     } catch (error) {
       console.error('Failed to generate page:', error);
-      alert(`❌ Error: ${error.message}`);
-    } finally {
+      setGenerationProgress({
+        stage: 'error',
+        message: error.message,
+        currentPage: 0,
+        totalPages: 1
+      });
       setIsGeneratingAI(false);
     }
-  }, [project, currentPage, getCurrentPagePanels]);
+  }, [project, currentPage, getCurrentPagePanels, startPolling]);
 
   // Export handlers
   const handleExportPage = useCallback(async (format, dpi) => {
@@ -857,6 +1100,16 @@ export default function ProjectEditorPage() {
         panelCount={currentPagePanelCount}
         projectSettings={project.settings}
         isGenerating={isGeneratingAI}
+      />
+
+      {/* Generation Progress Overlay */}
+      <GenerationProgressOverlay
+        isVisible={!!generationProgress}
+        progress={generationProgress}
+        onCancel={() => {
+          setGenerationProgress(null);
+          resetJob();
+        }}
       />
     </div>
   );

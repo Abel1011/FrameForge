@@ -113,6 +113,7 @@ function getOriginalStructuredPrompts(panelPlan, projectSettings) {
  * @param {string} options.projectType - Project type (comic, manga, etc.)
  * @param {string} options.aspectRatio - Default aspect ratio for panels
  * @param {(progress: GenerationProgress) => void} [options.onProgress] - Progress callback
+ * @param {(pageData: Object) => void} [options.onPageComplete] - Called when a page is fully generated
  * @returns {Promise<GenerationResult>}
  */
 export async function generateFullComic({
@@ -122,6 +123,7 @@ export async function generateFullComic({
   projectType,
   aspectRatio = '3:4',
   onProgress,
+  onPageComplete,
 }) {
   const progress = (stage, message, extra = {}) => {
     if (onProgress) {
@@ -231,12 +233,24 @@ export async function generateFullComic({
         }
       }
 
-      generatedPages.push({
+      // Build page data
+      const pageData = {
         pageNumber,
         pagePlan,
         panelsPlan: pagePanelsPlan,
         panels: generatedPanels,
-      });
+      };
+
+      // Notify that this page is complete (for incremental updates)
+      if (onPageComplete) {
+        try {
+          await onPageComplete(pageData);
+        } catch (err) {
+          console.error(`Failed to notify page complete:`, err);
+        }
+      }
+
+      generatedPages.push(pageData);
     }
 
     // =========================================================================
@@ -276,6 +290,7 @@ export async function generateFullComic({
  * @param {string} options.projectType - Project type
  * @param {string} options.aspectRatio - Aspect ratio for panels
  * @param {(progress: GenerationProgress) => void} [options.onProgress] - Progress callback
+ * @param {(panelData: Object) => void} [options.onPanelComplete] - Called when a panel is generated
  * @returns {Promise<{success: boolean, panels: GeneratedPanel[], error?: string}>}
  */
 export async function generateSinglePage({
@@ -286,6 +301,7 @@ export async function generateSinglePage({
   projectType,
   aspectRatio = '3:4',
   onProgress,
+  onPanelComplete,
 }) {
   // Create a logger for this session
   const logger = createLogger();
@@ -396,24 +412,35 @@ export async function generateSinglePage({
         imageResult.error
       );
 
-      if (imageResult.success) {
-        generatedPanels.push({
-          pageNumber: 1,
-          panelNumber: panelPlan.panelNumber,
-          imageUrl: imageResult.imageUrl,
-          seed: imageResult.seed,
-          structuredPrompt: imageResult.structuredPrompt,
-          panelPlan,
-        });
-      } else {
+      // Build panel data
+      const panelData = imageResult.success ? {
+        pageNumber: 1,
+        panelNumber: panelPlan.panelNumber,
+        imageUrl: imageResult.imageUrl,
+        seed: imageResult.seed,
+        structuredPrompt: imageResult.structuredPrompt,
+        panelPlan,
+      } : {
+        pageNumber: 1,
+        panelNumber: panelPlan.panelNumber,
+        imageUrl: null,
+        error: imageResult.error,
+        panelPlan,
+      };
+
+      generatedPanels.push(panelData);
+
+      // Notify that this panel is complete (for incremental updates)
+      if (onPanelComplete) {
+        try {
+          await onPanelComplete(panelData);
+        } catch (err) {
+          console.error(`Failed to notify panel complete:`, err);
+        }
+      }
+
+      if (!imageResult.success) {
         logger.logError(`Panel ${panelPlan.panelNumber} generation`, imageResult.error || 'Unknown error');
-        generatedPanels.push({
-          pageNumber: 1,
-          panelNumber: panelPlan.panelNumber,
-          imageUrl: null,
-          error: imageResult.error,
-          panelPlan,
-        });
       }
     }
 

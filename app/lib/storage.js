@@ -153,6 +153,80 @@ export function createDefaultGrid() {
 }
 
 /**
+ * Create a grid layout with a specific number of panels
+ * Arranges panels in a smart way based on count:
+ * - 1 panel: 1 row, 1 column
+ * - 2 panels: 1 row, 2 columns (or 2 rows based on orientation)
+ * - 3 panels: 2 rows (1 on top, 2 on bottom)
+ * - 4 panels: 2 rows, 2 columns
+ * - 5 panels: 2 rows (2 on top, 3 on bottom)
+ * - 6 panels: 2 rows, 3 columns
+ * etc.
+ * 
+ * @param {number} panelCount - Number of panels to create
+ * @param {boolean} [isVertical=true] - Whether to prefer vertical arrangement
+ * @returns {import('../types').GridLayout}
+ */
+export function createGridWithPanels(panelCount, isVertical = true) {
+  if (panelCount <= 0) return createDefaultGrid();
+  
+  // Calculate optimal row/column arrangement
+  let rows = [];
+  let panelsRemaining = panelCount;
+  
+  // Smart layout based on panel count
+  if (panelCount === 1) {
+    rows = [{ panelCount: 1 }];
+  } else if (panelCount === 2) {
+    rows = isVertical ? [{ panelCount: 1 }, { panelCount: 1 }] : [{ panelCount: 2 }];
+  } else if (panelCount === 3) {
+    rows = isVertical ? [{ panelCount: 1 }, { panelCount: 2 }] : [{ panelCount: 2 }, { panelCount: 1 }];
+  } else if (panelCount === 4) {
+    rows = [{ panelCount: 2 }, { panelCount: 2 }];
+  } else if (panelCount === 5) {
+    rows = [{ panelCount: 2 }, { panelCount: 3 }];
+  } else if (panelCount === 6) {
+    rows = [{ panelCount: 3 }, { panelCount: 3 }];
+  } else {
+    // For more panels, distribute evenly
+    const rowCount = Math.ceil(Math.sqrt(panelCount));
+    const panelsPerRow = Math.ceil(panelCount / rowCount);
+    
+    for (let i = 0; i < rowCount && panelsRemaining > 0; i++) {
+      const count = Math.min(panelsPerRow, panelsRemaining);
+      rows.push({ panelCount: count });
+      panelsRemaining -= count;
+    }
+  }
+  
+  // Build the grid structure
+  const rowHeight = 100 / rows.length;
+  const gridRows = rows.map(rowConfig => {
+    const rowId = generateId();
+    const panelWidth = 100 / rowConfig.panelCount;
+    
+    return {
+      id: rowId,
+      height: rowHeight,
+      panels: Array.from({ length: rowConfig.panelCount }, () => ({
+        id: generateId(),
+        rowId: rowId,
+        width: panelWidth,
+        content: {
+          layers: [],
+          backgroundColor: '#ffffff'
+        }
+      }))
+    };
+  });
+  
+  return {
+    rows: gridRows,
+    gutterWidth: DEFAULT_GUTTER_WIDTH
+  };
+}
+
+/**
  * Create a new page
  * @param {string} projectId
  * @param {number} order

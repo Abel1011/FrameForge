@@ -220,14 +220,14 @@ export const DEFAULT_GUTTER_WIDTH = 8;
 
 /** @type {ArtStyle[]} */
 export const ART_STYLES = [
-  { id: 'manga', name: 'Manga/Anime', customPrompt: 'Japanese manga style with clean lines, expressive eyes, dynamic poses, screen tones, and dramatic speed lines', previewImage: '/previews/style-manga.svg' },
-  { id: 'comic-american', name: 'American Comic', customPrompt: 'Bold American comic book style with strong outlines, vibrant colors, dramatic shading, and heroic proportions', previewImage: '/previews/style-comic-american.svg' },
-  { id: 'comic-european', name: 'European BD', customPrompt: 'European bande dessinée style with detailed linework, realistic proportions, rich colors, and atmospheric backgrounds', previewImage: '/previews/style-comic-european.svg' },
-  { id: 'graphic-novel', name: 'Graphic Novel', customPrompt: 'Graphic novel style with mature themes, detailed crosshatching, noir influences, and cinematic compositions', previewImage: '/previews/style-graphic-novel.svg' },
-  { id: 'watercolor', name: 'Watercolor', customPrompt: 'Soft watercolor illustration style with flowing colors, gentle gradients, visible paper texture, and organic edges', previewImage: '/previews/style-watercolor.svg' },
-  { id: 'digital-art', name: 'Digital Art', customPrompt: 'Modern digital illustration with smooth gradients, vibrant colors, detailed rendering, and polished finish', previewImage: '/previews/style-digital-art.svg' },
-  { id: 'vintage', name: 'Vintage/Retro', customPrompt: 'Vintage illustration style with muted colors, halftone dots, retro typography influences, and nostalgic aesthetics', previewImage: '/previews/style-vintage.svg' },
-  { id: 'minimalist', name: 'Minimalist', customPrompt: 'Clean minimalist style with simple geometric shapes, limited color palette, lots of white space, and elegant simplicity', previewImage: '/previews/style-minimalist.svg' },
+  { id: 'manga', name: 'Manga/Anime', customPrompt: 'Japanese manga style with clean lines, expressive eyes, dynamic poses, screen tones, and dramatic speed lines', previewImage: '/previews/Manga  Anime.png' },
+  { id: 'comic-american', name: 'American Comic', customPrompt: 'Bold American comic book style with strong outlines, vibrant colors, dramatic shading, and heroic proportions', previewImage: '/previews/American Comic.png' },
+  { id: 'comic-european', name: 'European BD', customPrompt: 'European bande dessinée style with detailed linework, realistic proportions, rich colors, and atmospheric backgrounds', previewImage: '/previews/European Bande Dessinée (BD).png' },
+  { id: 'graphic-novel', name: 'Graphic Novel', customPrompt: 'Graphic novel style with mature themes, detailed crosshatching, noir influences, and cinematic compositions', previewImage: '/previews/Graphic Novel.png' },
+  { id: 'watercolor', name: 'Watercolor', customPrompt: 'Soft watercolor illustration style with flowing colors, gentle gradients, visible paper texture, and organic edges', previewImage: '/previews/Watercolor.png' },
+  { id: 'digital-art', name: 'Digital Art', customPrompt: 'Modern digital illustration with smooth gradients, vibrant colors, detailed rendering, and polished finish', previewImage: '/previews/Digital Art.png' },
+  { id: 'vintage', name: 'Vintage/Retro', customPrompt: 'Vintage illustration style with muted colors, halftone dots, retro typography influences, and nostalgic aesthetics', previewImage: '/previews/Vintage  Retro.png' },
+  { id: 'minimalist', name: 'Minimalist', customPrompt: 'Clean minimalist style with simple geometric shapes, limited color palette, lots of white space, and elegant simplicity', previewImage: '/previews/Minimalist.png' },
 ];
 
 /** @type {string[]} */
@@ -238,26 +238,26 @@ export const CHARACTER_COLORS = [
 
 /** @type {StyleMedium[]} */
 export const STYLE_MEDIUMS = [
-  { id: 'digital-art', name: 'Digital Art', prompt: 'Digital illustration, clean digital art', previewImage: '/previews/medium-digital-art.svg' },
-  { id: 'oil-painting', name: 'Oil Painting', prompt: 'Oil painting on canvas, visible brushstrokes', previewImage: '/previews/medium-oil-painting.svg' },
-  { id: 'watercolor', name: 'Watercolor', prompt: 'Watercolor painting, soft washes, paper texture', previewImage: '/previews/medium-watercolor.svg' },
-  { id: 'pencil-sketch', name: 'Pencil Sketch', prompt: 'Pencil sketch, graphite drawing, hand-drawn', previewImage: '/previews/medium-pencil-sketch.svg' },
-  { id: 'ink-drawing', name: 'Ink Drawing', prompt: 'Ink drawing, pen and ink illustration', previewImage: '/previews/medium-ink-drawing.svg' },
-  { id: '3d-render', name: '3D Render', prompt: '3D render, CGI, computer generated imagery', previewImage: '/previews/medium-3d-render.svg' },
-  { id: 'photograph', name: 'Photograph', prompt: 'Photograph, photographic image', previewImage: '/previews/medium-photograph.svg' },
-  { id: 'cel-shading', name: 'Cel Shading', prompt: 'Cel-shaded, flat colors with bold outlines', previewImage: '/previews/medium-cel-shading.svg' },
+  { id: 'digital-art', name: 'Digital Art', prompt: 'Digital illustration, clean digital art', previewImage: '/previews/Digital Art.png' },
+  { id: 'oil-painting', name: 'Oil Painting', prompt: 'Oil painting on canvas, visible brushstrokes', previewImage: '/previews/Oil Painting.png' },
+  { id: 'watercolor', name: 'Watercolor', prompt: 'Watercolor painting, soft washes, paper texture', previewImage: '/previews/Watercolor.png' },
+  { id: 'pencil-sketch', name: 'Pencil Sketch', prompt: 'Pencil sketch, graphite drawing, hand-drawn', previewImage: '/previews/Pencil Sketch.png' },
+  { id: 'ink-drawing', name: 'Ink Drawing', prompt: 'Ink drawing, pen and ink illustration', previewImage: '/previews/Ink Drawing.png' },
+  { id: '3d-render', name: '3D Render', prompt: '3D render, CGI, computer generated imagery', previewImage: '/previews/3D Render.png' },
+  { id: 'photograph', name: 'Photograph', prompt: 'Photograph, photographic image', previewImage: '/previews/Photograph.png' },
+  { id: 'cel-shading', name: 'Cel Shading', prompt: 'Cel-shaded, flat colors with bold outlines', previewImage: '/previews/Cel Shading.png' },
 ];
 
 /** @type {LightingPreset[]} */
 export const LIGHTING_PRESETS = [
-  { id: 'natural', name: 'Natural Daylight', conditions: 'Natural daylight, soft sunlight', shadows: 'Soft', previewImage: '/previews/lighting-natural.svg' },
-  { id: 'golden-hour', name: 'Golden Hour', conditions: 'Golden hour, warm sunset light', shadows: 'Long, soft', previewImage: '/previews/lighting-golden-hour.svg' },
-  { id: 'dramatic', name: 'Dramatic', conditions: 'Dramatic side lighting', shadows: 'Harsh, high contrast', previewImage: '/previews/lighting-dramatic.svg' },
-  { id: 'neon', name: 'Neon/Cyberpunk', conditions: 'Neon lights, colorful artificial lighting', shadows: 'Multiple colored', previewImage: '/previews/lighting-neon.svg' },
-  { id: 'studio', name: 'Studio Lighting', conditions: 'Professional studio lighting, even illumination', shadows: 'Controlled, soft', previewImage: '/previews/lighting-studio.svg' },
-  { id: 'moonlight', name: 'Moonlight', conditions: 'Moonlight, night scene, blue tones', shadows: 'Deep, mysterious', previewImage: '/previews/lighting-moonlight.svg' },
-  { id: 'overcast', name: 'Overcast/Cloudy', conditions: 'Overcast sky, diffused light', shadows: 'Minimal, soft', previewImage: '/previews/lighting-overcast.svg' },
-  { id: 'backlit', name: 'Backlit/Silhouette', conditions: 'Backlit, rim lighting', shadows: 'Strong silhouette', previewImage: '/previews/lighting-backlit.svg' }
+  { id: 'natural', name: 'Natural Daylight', conditions: 'Natural daylight, soft sunlight', shadows: 'Soft', previewImage: '/previews/Natural Daylight.png' },
+  { id: 'golden-hour', name: 'Golden Hour', conditions: 'Golden hour, warm sunset light', shadows: 'Long, soft', previewImage: '/previews/Golden Hour.png' },
+  { id: 'dramatic', name: 'Dramatic', conditions: 'Dramatic side lighting', shadows: 'Harsh, high contrast', previewImage: '/previews/Dramatic.png' },
+  { id: 'neon', name: 'Neon/Cyberpunk', conditions: 'Neon lights, colorful artificial lighting', shadows: 'Multiple colored', previewImage: '/previews/Neon  Cyberpunk.png' },
+  { id: 'studio', name: 'Studio Lighting', conditions: 'Professional studio lighting, even illumination', shadows: 'Controlled, soft', previewImage: '/previews/Studio Lighting.png' },
+  { id: 'moonlight', name: 'Moonlight', conditions: 'Moonlight, night scene, blue tones', shadows: 'Deep, mysterious', previewImage: '/previews/Moonlight.png' },
+  { id: 'overcast', name: 'Overcast/Cloudy', conditions: 'Overcast sky, diffused light', shadows: 'Minimal, soft', previewImage: '/previews/Overcast  Cloudy.png' },
+  { id: 'backlit', name: 'Backlit/Silhouette', conditions: 'Backlit, rim lighting', shadows: 'Strong silhouette', previewImage: '/previews/Backlit.png' }
 ];
 
 /** @type {{id: string, name: string, colors: string[], moodPrompt: string}[]} */
